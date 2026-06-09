@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SIP Assistant</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0c0f;
+    --bg2: #0f1318;
+    --bg3: #141920;
+    --border: #1e2d3d;
+    --border-bright: #2a4a6b;
+    --accent: #00c8ff;
+    --accent2: #0077aa;
+    --accent-dim: #00c8ff22;
+    --green: #00ff9d;
+    --green-dim: #00ff9d18;
+    --text: #c8dde8;
+    --text-dim: #4a6a80;
+    --text-muted: #2a4a5a;
+    --font-mono: 'Share Tech Mono', monospace;
+    --font-ui: 'Rajdhani', sans-serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-ui);
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.08) 2px, rgba(0,0,0,0.08) 4px);
+    pointer-events: none;
+    z-index: 100;
+  }
+
+  header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 14px 24px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg2);
+    flex-shrink: 0;
+  }
+
+  .logo-block { display: flex; align-items: center; gap: 12px; }
+
+  .logo-icon {
+    width: 36px; height: 36px;
+    border: 1px solid var(--accent);
+    display: flex; align-items: center; justify-content: center;
+    animation: pulse-border 3s ease-in-out infinite;
+  }
+
+  @keyframes pulse-border {
+    0%, 100% { box-shadow: 0 0 6px var(--accent2); }
+    50% { box-shadow: 0 0 16px var(--accent), inset 0 0 8px var(--accent-dim); }
+  }
+
+  .logo-icon svg { width: 20px; height: 20px; }
+  .logo-text { font-size: 22px; font-weight: 700; letter-spacing: 4px; color: var(--accent); text-transform: uppercase; }
+  .logo-sub { font-family: var(--font-mono); font-size: 10px; color: var(--text-dim); letter-spacing: 2px; margin-top: 1px; }
+
+  .header-right {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+
+  .status-item {
+    display: flex; align-items: center; gap: 6px;
+    font-family: var(--font-mono); font-size: 11px; color: var(--text-dim);
+  }
+
+  .dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--green);
+    box-shadow: 0 0 6px var(--green);
+    animation: blink 2s ease-in-out infinite;
+  }
+
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  .clear-btn {
+    background: transparent; border: none;
+    color: var(--text-muted); font-family: var(--font-mono); font-size: 10px;
+    cursor: pointer; padding: 4px 8px;
+    transition: color 0.15s; letter-spacing: 1px; text-transform: uppercase;
+  }
+  .clear-btn:hover { color: #ff4444; }
+
+  main { display: flex; flex: 1; overflow: hidden; }
+
+  aside {
+    width: 220px; border-right: 1px solid var(--border);
+    background: var(--bg2); display: flex; flex-direction: column;
+    flex-shrink: 0; padding: 20px 16px;
+  }
+
+  .ice-notice {
+    border: 1px solid var(--border-bright);
+    background: var(--bg3);
+    padding: 16px;
+    position: relative;
+  }
+
+  .ice-notice::before {
+    content: '';
+    position: absolute;
+    top: -1px; left: -1px;
+    width: 8px; height: 8px;
+    border-top: 2px solid var(--accent);
+    border-left: 2px solid var(--accent);
+  }
+
+  .ice-notice::after {
+    content: '';
+    position: absolute;
+    bottom: -1px; right: -1px;
+    width: 8px; height: 8px;
+    border-bottom: 2px solid var(--accent2);
+    border-right: 2px solid var(--accent2);
+  }
+
+  .ice-icon {
+    font-size: 28px;
+    text-align: center;
+    margin-bottom: 10px;
+    filter: drop-shadow(0 0 8px #00c8ff88);
+  }
+
+  .ice-title {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--accent);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    text-align: center;
+    margin-bottom: 12px;
+  }
+
+  .ice-text {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--text-dim);
+    line-height: 1.8;
+    text-align: center;
+  }
+
+  .ice-text span {
+    color: var(--accent);
+  }
+
+  .chat-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+  .messages {
+    flex: 1; overflow-y: auto; padding: 24px;
+    display: flex; flex-direction: column; gap: 16px; scroll-behavior: smooth;
+  }
+  .messages::-webkit-scrollbar { width: 4px; }
+  .messages::-webkit-scrollbar-thumb { background: var(--border); }
+
+  .welcome {
+    text-align: center; padding: 48px 24px;
+    opacity: 0; animation: fadeIn 0.8s ease 0.3s forwards;
+  }
+
+  @keyframes fadeIn { to { opacity: 1; } }
+
+  .welcome-icon { font-size: 40px; margin-bottom: 16px; filter: drop-shadow(0 0 20px var(--accent2)); }
+  .welcome h2 { font-size: 20px; font-weight: 700; letter-spacing: 3px; color: var(--accent); text-transform: uppercase; margin-bottom: 8px; }
+  .welcome p { font-family: var(--font-mono); font-size: 12px; color: var(--text-dim); line-height: 1.8; max-width: 480px; margin: 0 auto; }
+
+  .welcome-examples { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 24px; }
+
+  .example-chip {
+    background: var(--bg3); border: 1px solid var(--border);
+    color: var(--text-dim); font-family: var(--font-mono); font-size: 11px;
+    padding: 6px 12px; cursor: pointer; transition: all 0.15s;
+  }
+  .example-chip:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
+
+  .msg {
+    display: flex; gap: 12px; max-width: 860px;
+    opacity: 0; animation: slideIn 0.3s ease forwards;
+  }
+  @keyframes slideIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+  .msg.user { flex-direction: row-reverse; align-self: flex-end; }
+  .msg.bot { align-self: flex-start; }
+
+  .msg-avatar {
+    width: 32px; height: 32px; border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-mono); font-size: 11px; flex-shrink: 0; margin-top: 2px;
+  }
+  .msg.user .msg-avatar { border-color: var(--accent2); color: var(--accent); background: var(--accent-dim); }
+  .msg.bot .msg-avatar { border-color: var(--green); color: var(--green); background: var(--green-dim); }
+
+  .msg-content { display: flex; flex-direction: column; gap: 4px; }
+  .msg-meta { font-family: var(--font-mono); font-size: 9px; color: var(--text-muted); letter-spacing: 1px; }
+  .msg.user .msg-meta { text-align: right; }
+
+  .msg-bubble {
+    padding: 12px 16px; font-size: 14px; line-height: 1.7;
+    border: 1px solid var(--border); background: var(--bg3); position: relative;
+  }
+  .msg.user .msg-bubble { border-color: var(--accent2); background: #001a2a; color: var(--text); }
+
+  .msg-bubble pre {
+    background: #07090c; border: 1px solid var(--border); border-left: 3px solid var(--accent);
+    padding: 12px; margin: 8px 0; font-family: var(--font-mono); font-size: 11px;
+    overflow-x: auto; line-height: 1.6; color: #7ec8e3; white-space: pre-wrap; word-break: break-all;
+  }
+  .msg-bubble code { font-family: var(--font-mono); font-size: 12px; color: var(--accent); background: var(--accent-dim); padding: 1px 5px; }
+  .msg-bubble strong { color: var(--accent); font-weight: 600; }
+
+  .msg.bot .msg-bubble::before, .msg.bot .msg-bubble::after {
+    content: ''; position: absolute; width: 8px; height: 8px;
+  }
+  .msg.bot .msg-bubble::before { top: -1px; left: -1px; border-top: 2px solid var(--accent); border-left: 2px solid var(--accent); }
+  .msg.bot .msg-bubble::after { bottom: -1px; right: -1px; border-bottom: 2px solid var(--accent2); border-right: 2px solid var(--accent2); }
+
+  .typing-indicator {
+    display: flex; gap: 5px; align-items: center;
+    padding: 14px 16px; background: var(--bg3); border: 1px solid var(--border); width: fit-content;
+  }
+  .typing-dot { width: 6px; height: 6px; background: var(--green); border-radius: 50%; animation: typingBounce 1.2s ease-in-out infinite; }
+  .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+  .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes typingBounce { 0%, 80%, 100% { transform: translateY(0); opacity: 0.4; } 40% { transform: translateY(-6px); opacity: 1; } }
+
+  .msg-bubble.error { border-color: #ff444444; background: #200a0a; color: #ff8888; }
+
+  .input-area { border-top: 1px solid var(--border); background: var(--bg2); padding: 16px 24px; flex-shrink: 0; }
+
+  .input-mode { display: flex; gap: 2px; margin-bottom: 10px; }
+
+  .mode-tab {
+    background: transparent; border: 1px solid var(--border);
+    color: var(--text-muted); font-family: var(--font-mono); font-size: 10px;
+    padding: 4px 12px; cursor: pointer; letter-spacing: 1px;
+    transition: all 0.15s; text-transform: uppercase;
+  }
+  .mode-tab.active { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
+
+  .input-row { display: flex; gap: 10px; align-items: flex-end; }
+
+  #user-input {
+    flex: 1; background: var(--bg3); border: 1px solid var(--border);
+    color: var(--text); font-family: var(--font-mono); font-size: 13px;
+    padding: 12px 16px; resize: none; min-height: 48px; max-height: 180px;
+    outline: none; transition: border-color 0.2s; line-height: 1.5;
+  }
+  #user-input:focus { border-color: var(--accent2); }
+  #user-input::placeholder { color: var(--text-muted); }
+  #user-input.sip-mode { font-size: 12px; min-height: 120px; border-left: 3px solid var(--accent2); color: #7ec8e3; }
+
+  .send-btn {
+    background: var(--accent2); border: 1px solid var(--accent);
+    color: #fff; font-family: var(--font-mono); font-size: 12px;
+    padding: 12px 20px; cursor: pointer; letter-spacing: 2px; text-transform: uppercase;
+    display: flex; align-items: center; gap: 8px;
+    transition: all 0.15s; height: 48px; white-space: nowrap;
+  }
+  .send-btn:hover:not(:disabled) { background: var(--accent); box-shadow: 0 0 20px var(--accent2); }
+  .send-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .input-hint { font-family: var(--font-mono); font-size: 10px; color: var(--text-muted); margin-top: 6px; display: flex; justify-content: space-between; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo-block">
+    <div class="logo-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#00c8ff" stroke-width="1.5">
+        <path d="M3 5a2 2 0 012-2h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5z"/>
+        <path d="M8 10h8M8 14h5"/>
+        <circle cx="17" cy="14" r="1.5" fill="#00c8ff" stroke="none"/>
+      </svg>
+    </div>
+    <div>
+      <div class="logo-text">SIP Assistant</div>
+      <div class="logo-sub">RFC 3261 · PROTOCOLO SIP · IA</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="status-item">
+      <span class="dot"></span>
+      <span>ONLINE</span>
+    </div>
+    <button class="clear-btn" onclick="clearChat()">⌫ LIMPAR</button>
+  </div>
+</header>
+
+<main>
+  <aside>
+    <div class="ice-notice">
+      <div class="ice-icon">🧊</div>
+      <div class="ice-title">// AVISO</div>
+      <div class="ice-text">
+        Para garantir <span>máxima precisão</span>, a IA é treinada para esquecer o contexto anterior e se basear <span>do zero na RFC 3261</span> a cada pergunta.<br><br>
+        Sem vícios. Sem contaminação. Sem julgamentos.<br><br>
+        Ela tem um <span>coração de gelo</span> ❄️
+      </div>
+    </div>
+  </aside>
+
+  <section class="chat-area">
+    <div class="messages" id="messages">
+      <div class="welcome" id="welcome">
+        <div class="welcome-icon">📡</div>
+        <h2>SIP RFC Assistant</h2>
+        <p>Faça perguntas sobre o protocolo SIP, cole pacotes SIP brutos para análise, ou explore os conceitos da RFC 3261. A IA responde com base na documentação oficial.</p>
+        <div class="welcome-examples">
+          <span class="example-chip" onclick="insertQuick('O campo Via é obrigatório em todas as requests?')">Via header obrigatório?</span>
+          <span class="example-chip" onclick="insertQuick('Explique o fluxo de um INVITE com resposta 200 OK')">Fluxo INVITE → 200 OK</span>
+          <span class="example-chip" onclick="insertQuick('O que é branch parameter e para que serve?')">Branch parameter</span>
+          <span class="example-chip" onclick="insertQuick('Diferença entre proxy e redirect server no SIP')">Proxy vs Redirect</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="input-area">
+      <div class="input-mode">
+        <button class="mode-tab active" id="tab-text" onclick="setMode('text')">💬 PERGUNTA</button>
+        <button class="mode-tab" id="tab-sip" onclick="setMode('sip')">📦 PACOTE SIP</button>
+      </div>
+      <div class="input-row">
+        <textarea
+          id="user-input"
+          placeholder="Digite sua pergunta sobre SIP ou RFC 3261..."
+          rows="1"
+          onkeydown="handleKey(event)"
+          oninput="autoResize(this)"
+        ></textarea>
+        <button class="send-btn" id="send-btn" onclick="sendMessage()">
+          <span>ENVIAR</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="22" y1="2" x2="11" y2="13"/>
+            <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+          </svg>
+        </button>
+      </div>
+      <div class="input-hint">
+        <span id="mode-hint">Enter para enviar · Shift+Enter para nova linha</span>
+        <span id="char-count">0 chars</span>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script>
+  let currentMode = 'text';
+  let isLoading = false;
+  let chatHistory = [];
+
+  function setMode(mode) {
+    currentMode = mode;
+    const input = document.getElementById('user-input');
+    document.getElementById('tab-text').classList.toggle('active', mode === 'text');
+    document.getElementById('tab-sip').classList.toggle('active', mode === 'sip');
+    if (mode === 'sip') {
+      input.classList.add('sip-mode');
+      input.placeholder = 'Cole o pacote SIP aqui...\n\nEx: INVITE sip:bob@biloxi.com SIP/2.0\nVia: SIP/2.0/UDP ...';
+      document.getElementById('mode-hint').textContent = 'Cole o pacote e clique em enviar. Shift+Enter para nova linha';
+    } else {
+      input.classList.remove('sip-mode');
+      input.placeholder = 'Digite sua pergunta sobre SIP ou RFC 3261...';
+      document.getElementById('mode-hint').textContent = 'Enter para enviar · Shift+Enter para nova linha';
+    }
+    input.focus();
+  }
+
+  function insertQuick(text) {
+    setMode('text');
+    const input = document.getElementById('user-input');
+    input.value = text;
+    autoResize(input);
+    document.getElementById('char-count').textContent = text.length + ' chars';
+    input.focus();
+  }
+
+  function insertPacket(packet) {
+    setMode('sip');
+    const input = document.getElementById('user-input');
+    input.value = packet;
+    autoResize(input);
+    document.getElementById('char-count').textContent = packet.length + ' chars';
+    input.focus();
+  }
+
+  function handleKey(e) {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+    document.getElementById('char-count').textContent = e.target.value.length + ' chars';
+  }
+
+  function autoResize(el) {
+    el.style.height = 'auto';
+    el.style.height = Math.min(el.scrollHeight, 180) + 'px';
+    document.getElementById('char-count').textContent = el.value.length + ' chars';
+  }
+
+  async function sendMessage() {
+    const input = document.getElementById('user-input');
+    const text = input.value.trim();
+    if (!text || isLoading) return;
+
+    const welcome = document.getElementById('welcome');
+    if (welcome) welcome.style.display = 'none';
+
+    const userLabel = currentMode === 'sip' ? '📦 PACOTE SIP' : '💬 PERGUNTA';
+    appendMessage('user', text, userLabel);
+    chatHistory.push({ role: 'user', content: text, type: currentMode });
+
+    input.value = '';
+    input.style.height = 'auto';
+    document.getElementById('char-count').textContent = '0 chars';
+
+    isLoading = true;
+    document.getElementById('send-btn').disabled = true;
+    const typingEl = appendTyping();
+
+    try {
+      const res = await fetch('proxy.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: text,
+          type: currentMode,
+          history: chatHistory.slice(-10),
+          timestamp: new Date().toISOString()
+        })
+      });
+
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const data = await res.json();
+
+      const reply =
+        data.response || data.output || data.text ||
+        data.message || data.answer ||
+        (Array.isArray(data) && data[0]?.output) ||
+        JSON.stringify(data);
+
+      typingEl.remove();
+      appendMessage('bot', reply, '⚡ SIP-RFC-IA');
+      chatHistory.push({ role: 'assistant', content: reply });
+
+    } catch (err) {
+      typingEl.remove();
+      appendMessage('bot', 'Erro ao comunicar com o servidor:\n\n' + err.message, '⚠ ERRO', true);
+    }
+
+    isLoading = false;
+    document.getElementById('send-btn').disabled = false;
+  }
+
+  function appendMessage(role, text, label, isError = false) {
+    const container = document.getElementById('messages');
+    const time = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    const msgDiv = document.createElement('div');
+    msgDiv.className = 'msg ' + role;
+    const avatar = role === 'user' ? 'EU' : 'IA';
+    msgDiv.innerHTML = `
+      <div class="msg-avatar">${avatar}</div>
+      <div class="msg-content">
+        <div class="msg-meta">${label} · ${time}</div>
+        <div class="msg-bubble ${isError ? 'error' : ''}">${formatText(text)}</div>
+      </div>
+    `;
+    container.appendChild(msgDiv);
+    container.scrollTop = container.scrollHeight;
+    return msgDiv;
+  }
+
+  function appendTyping() {
+    const container = document.getElementById('messages');
+    const wrapper = document.createElement('div');
+    wrapper.className = 'msg bot';
+    wrapper.innerHTML = `
+      <div class="msg-avatar">IA</div>
+      <div class="msg-content">
+        <div class="msg-meta">⚡ SIP-RFC-IA · processando...</div>
+        <div class="typing-indicator">
+          <div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>
+        </div>
+      </div>
+    `;
+    container.appendChild(wrapper);
+    container.scrollTop = container.scrollHeight;
+    return wrapper;
+  }
+
+  function formatText(text) {
+    let t = text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    t = t.replace(/((?:SIP\/2\.0|INVITE|REGISTER|BYE|OPTIONS|ACK|CANCEL|SUBSCRIBE|NOTIFY)[^\n]*(?:\n[^\n]+)*)/g, (m) => {
+      if (m.includes('Via:') || m.includes('CSeq:') || m.includes('From:')) return `<pre>${m.trim()}</pre>`;
+      return m;
+    });
+    t = t.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+    t = t.replace(/`([^`]+)`/g, '<code>$1</code>');
+    t = t.replace(/\n/g, '<br>');
+    return t;
+  }
+
+  function clearChat() {
+    if (!confirm('Limpar histórico da conversa?')) return;
+    chatHistory = [];
+    document.getElementById('messages').innerHTML = `
+      <div class="welcome" id="welcome">
+        <div class="welcome-icon">📡</div>
+        <h2>SIP RFC Assistant</h2>
+        <p>Faça perguntas sobre o protocolo SIP, cole pacotes SIP brutos para análise, ou explore os conceitos da RFC 3261. A IA responde com base na documentação oficial.</p>
+        <div class="welcome-examples">
+          <span class="example-chip" onclick="insertQuick('O campo Via é obrigatório em todas as requests?')">Via header obrigatório?</span>
+          <span class="example-chip" onclick="insertQuick('Explique o fluxo de um INVITE com resposta 200 OK')">Fluxo INVITE → 200 OK</span>
+          <span class="example-chip" onclick="insertQuick('O que é branch parameter e para que serve?')">Branch parameter</span>
+          <span class="example-chip" onclick="insertQuick('Diferença entre proxy e redirect server no SIP')">Proxy vs Redirect</span>
+        </div>
+      </div>
+    `;
+  }
+</script>
+</body>
+</html>
